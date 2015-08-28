@@ -11,7 +11,7 @@ namespace CEGTool
         {
             Console.ForegroundColor = ConsoleColor.Cyan;
             Console.WriteLine("The Punisher *.ceg Texture Dumper/Creator by gdkchan");
-            Console.WriteLine("Version 0.1.1");
+            Console.WriteLine("Version 0.1.2");
             Console.CursorTop++;
             Console.ResetColor();
 
@@ -114,7 +114,8 @@ namespace CEGTool
                 uint Descriptor = Reader.ReadUInt32();
                 Reader.ReadUInt32();
 
-                byte Format = (byte)((Descriptor >> 16) & 0xff);
+                byte Format = (byte)(Descriptor & 0xff);
+                byte Mipmaps = (byte)((Descriptor >> 24) & 0xff);
 
                 string Name = ReadString(Reader, (uint)Input.Position);
                 Input.Seek(0x18, SeekOrigin.Current);
@@ -126,7 +127,7 @@ namespace CEGTool
                 Bitmap FullImage = null;
                 switch (Format)
                 {
-                    case 1:
+                    case 7: //RGBA8
                         Input.Seek(Offset, SeekOrigin.Begin);
                         Data = new byte[Width * Height * 4];
                         Reader.Read(Data, 0, Data.Length);
@@ -146,11 +147,7 @@ namespace CEGTool
                             }
                         }
                         break;
-                    case 2:
-                    case 3: //Guesswork, may be wrong
-                        FullImage = DXTCodec.DXT3_Decode(Data, POW2RoundUp(Width), POW2RoundUp(Height)); break;
-                    case 4: 
-                    case 5:
+                    case 0xf: //DXT5
                         FullImage = DXTCodec.DXT5_Decode(Data, POW2RoundUp(Width), POW2RoundUp(Height)); break;
                     default:
                         Console.ForegroundColor = ConsoleColor.Yellow;
